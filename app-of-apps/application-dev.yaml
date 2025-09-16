@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: chatbot-test-sep16-1-app
+  namespace: ai-rhdh
+  finalizers: ["resources-finalizer.argocd.argoproj.io"]
+spec:
+  project: default
+  source:
+    path: ./components/chatbot-test-sep16-1/overlays/development
+    repoURL: https://github.com/redhat-appstudio-mjf/chatbot-test-sep16-1-gitops.git
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: lucas
+  syncPolicy:
+    managedNamespaceMetadata:
+      labels:
+        argocd.argoproj.io/managed-by: ai-rhdh
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - PruneLast=true

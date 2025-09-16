@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/instance: chatbot-test-sep16-1-model-server
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: chatbot-test-sep16-1-model-server
+    app.kubernetes.io/part-of: chatbot-test-sep16-1
+  name: chatbot-test-sep16-1-model-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: chatbot-test-sep16-1-model-server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: chatbot-test-sep16-1-model-server
+    spec:
+      initContainers:
+        - name: model-file
+          image: quay.io/redhat-ai-dev/granite-3.1-8b-instruct-gguf:latest
+          command: ['/usr/bin/install', '/model/model.file', '/shared/']
+          volumeMounts:
+            - name: model-file
+              mountPath: /shared
+      containers:
+        - env:
+            - name: HOST
+              value: "0.0.0.0"
+            - name: PORT
+              value: "8001"
+            - name: MODEL_PATH
+              value: /model/model.file
+            - name: CHAT_FORMAT
+              value: openchat
+          image: quay.io/redhat-ai-dev/llamacpp_python:0.3.8
+          volumeMounts:
+            - name: model-file
+              mountPath: /model
+          name: app-model-service
+          ports:
+            - containerPort: 8001
+          securityContext:
+            runAsNonRoot: true
+      volumes:
+        - name: model-file
+          emptyDir: {}
